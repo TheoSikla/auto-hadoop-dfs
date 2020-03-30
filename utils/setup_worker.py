@@ -58,9 +58,8 @@ def worker_init(hostname, unpack=True):
     print(f"[+] Connected to {hostname}.")
 
     # Check if java exists
-    if not translate_to_bool(rc.execute_command(check_java_dir_exists)) or \
-            translate_to_bool(rc.execute_command(check_java_dir_exists)):
-        if not translate_to_bool(rc.execute_command(check_java_dir_exists)):
+    if not translate_to_bool(rc.execute_command(check_java_dir_exists)):
+        if not translate_to_bool(rc.execute_command(check_hadoop_tar_exists)):
             print("[+] Uploading java tar...")
             rc.upload(f"{get_artifacts_full_path()}/{java_tar_file_name}")
             print("[+] Upload completed successfully.")
@@ -79,9 +78,8 @@ def worker_init(hostname, unpack=True):
                                    f"{env.hadoop_user_home}/java")
 
     # Check if hadoop exists
-    if not translate_to_bool(rc.execute_command(check_hadoop_dir_exists)) or \
-            translate_to_bool(rc.execute_command(check_hadoop_dir_exists)):
-        if not translate_to_bool(rc.execute_command(check_hadoop_dir_exists)):
+    if not translate_to_bool(rc.execute_command(check_hadoop_dir_exists)):
+        if not translate_to_bool(rc.execute_command(check_hadoop_tar_exists)):
             print("[+] Uploading hadoop...")
             rc.upload(f"{get_artifacts_full_path()}/{hadoop_tar_file_name}")
             print("[+] Upload completed successfully.")
