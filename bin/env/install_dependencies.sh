@@ -3,10 +3,22 @@
 # Donwload and install pyenv
 curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 
-# Install necessary dependencies
-apt-get install -y make build-essential libssl-dev zlib1g-dev \
-libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
-libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
+## Install necessary dependencies
+#apt-get install -y make build-essential libssl-dev zlib1g-dev \
+#libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
+#libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
+
+if ! grep -q pyenv "$HOME/.bashrc"; then
+  echo '
+export PATH="/home/$USER//.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+' >> "$HOME/.bashrc"
+fi
+
+export PATH="/home/$USER//.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 # Install Python 3.7.0
 pyenv install -v 3.7.0

@@ -1,6 +1,7 @@
 import env
 from utils.ssh_handler import RemoteClient
 from utils.checks import get_artifacts_full_path
+from utils.entities import get_master, get_workers
 
 java_tar_file_name = env.environ.get('JAVA_TAR_FILE_NAME', None)
 hadoop_tar_file_name = env.environ.get('HADOOP_STABLE_VERSION_NAME_TAR', None)
@@ -33,6 +34,26 @@ create_failsafe_dot_profile = f'if [ ! -f {env.hadoop_user_home}/.profile2 ]; th
 export_path_with_new_binaries = f'cat {env.hadoop_user_home}/.profile2 > {env.hadoop_user_home}/.profile;' \
                                 f'echo "PATH={env.hadoop_user_home}/java/bin:{env.hadoop_user_home}/hadoop/bin:{env.hadoop_user_home}/hadoop/sbin:\$PATH" >> ' \
                                 f'{env.hadoop_user_home}/.profile;'
+
+is_wsl = f'if grep -q Microsoft /proc/version; then ' \
+         f'echo "True"; else echo "False"; fi'
+
+create_failsafe_hosts_file = f'if [ ! -f {env.hadoop_user_home}/hosts ]; then ' \
+                             f'cp {env.environ.get("HOSTS_FILE", None)} "$HOME/hosts"; fi'
+
+
+def append_to_hosts_file(rc):
+    payload = get_workers()
+    payload.append(get_master())
+    hosts_file = env.environ.get('HOSTS_FILE', None)
+    rc.execute_command(f'if [ -f {env.hadoop_user_home}/hosts ]; then cat "$HOME/hosts" > {hosts_file}; fi')
+    for entry in list(reversed(payload)):
+        ip = entry['ip']
+        hostname = entry['hostname']
+        rc.execute_command(f'echo -e "{ip}\t{hostname}" >> {hosts_file}')
+
+    if translate_to_bool(rc.execute_command(is_wsl)):
+        rc.execute_command(f'echo -e "127.0.1.1\t{rc.host}" >> {hosts_file}')
 
 
 def translate_to_bool(string):
@@ -101,5 +122,11 @@ def worker_init(hostname, unpack=True):
 
     rc.execute_command(create_failsafe_dot_profile)
     rc.execute_command(export_path_with_new_binaries)
+
+    # Configure /etc/hosts file
+    rc.execute_command(create_failsafe_hosts_file)
+    append_to_hosts_file(rc)
+
+    print(f"[+] {hostname} setup was completed successfully!\n")
 
     rc.disconnect()

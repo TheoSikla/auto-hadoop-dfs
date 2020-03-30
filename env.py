@@ -1,6 +1,10 @@
 from os import environ
 from utils.entities import get_master
 
+environ["HOSTS_FILE"] = "/etc/hosts"
+environ["WORKER_IDENTIFIER"] = "worker"
+environ["MASTER_IDENTIFIER"] = "master"
+
 environ["HADOOP_USER_HOME"] = "/home/hadoop"
 hadoop_user_home = environ.get('HADOOP_USER_HOME', None)
 environ["HADOOP_HOME"] = "/home/hadoop/hadoop"

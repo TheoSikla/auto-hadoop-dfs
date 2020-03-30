@@ -2,7 +2,7 @@ import env
 from utils.setup_hadoop import setup_hadoop
 from utils.setup_java import setup_java
 from utils.generate_xml_conf import generate
-from os import system
+from os import system, path
 
 create_failsafe_dot_profile = f'if [ ! -f {env.hadoop_user_home}/.profile2 ]; then ' \
                               f'cp {env.hadoop_user_home}/.profile {env.hadoop_user_home}/.profile2;' \
@@ -22,4 +22,13 @@ def master_init():
     generate()
     system(create_failsafe_dot_profile)
     system(export_path_with_new_binaries)
-    print("[+] Master was set up successfully!")
+
+    if not path.isfile(f"{env.environ.get('SSH_KEY')}") or not path.isfile(f"{env.environ.get('SSH_KEY_PUB')}"):
+        if not path.isdir('~/.ssh'):
+            system('mkdir ~/.ssh')
+        print("[!] SSH key does not exists.")
+        print("[+] Generating new SSH key...")
+        system("ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa")
+        print("[+] SSH key was created successfully.")
+
+    print("[+] Master was set up successfully!\n")
