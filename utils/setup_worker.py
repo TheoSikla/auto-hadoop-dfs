@@ -53,7 +53,20 @@ def append_to_hosts_file(rc):
         rc.execute_command(f'echo -e "{ip}\t{hostname}" >> {hosts_file}')
 
     if translate_to_bool(rc.execute_command(is_wsl)):
-        rc.execute_command(f'echo -e "127.0.1.1\t{rc.host}" >> {hosts_file}')
+        retrieved_hostfile = rc.execute_command(f'cat {hosts_file}')
+        lines_to_write = []
+        for line in retrieved_hostfile.split('\n'):
+            flag = False
+            for item in line.split('\t'):
+                if 'DESKTOP' in item:
+                    flag = True
+            if flag:
+                items = line.split('\t')
+                line = f'{items[0]}\t{rc.host}\t'
+                line += '\t'.join([_ for _ in items[1:]])
+            lines_to_write.append(line)
+        lines_to_write = '\n'.join(lines_to_write)
+        rc.execute_command(f'echo -e "{lines_to_write}" > {hosts_file}')
 
 
 def translate_to_bool(string):
@@ -80,7 +93,7 @@ def worker_init(hostname, unpack=True):
 
     # Check if java exists
     if not translate_to_bool(rc.execute_command(check_java_dir_exists)):
-        if not translate_to_bool(rc.execute_command(check_hadoop_tar_exists)):
+        if not translate_to_bool(rc.execute_command(check_java_tar_exists)):
             print("[+] Uploading java tar...")
             rc.upload(f"{get_artifacts_full_path()}/{java_tar_file_name}")
             print("[+] Upload completed successfully.")

@@ -26,9 +26,14 @@ def master_init():
     if not path.isfile(f"{env.environ.get('SSH_KEY')}") or not path.isfile(f"{env.environ.get('SSH_KEY_PUB')}"):
         if not path.isdir('~/.ssh'):
             system('mkdir ~/.ssh')
-        print("[!] SSH key does not exists.")
+
+        print("[!] SSH key does not exist.")
         print("[+] Generating new SSH key...")
         system("ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa")
         print("[+] SSH key was created successfully.")
+
+    if not path.isfile('~/.ssh/authorized_keys'):
+        system('touch ~/.ssh/authorized_keys;')
+        system(f"cat {env.environ.get('SSH_KEY_PUB')} > ~/.ssh/authorized_keys")
 
     print("[+] Master was set up successfully!\n")
