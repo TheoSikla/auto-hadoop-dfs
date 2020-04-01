@@ -1,6 +1,8 @@
 #!/bin/bash
 
-bash stop_hdfs.sh
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+bash "$SCRIPTPATH/stop_hdfs.sh"
 
 if hash hdfs 2>/dev/null; then
   yes | hdfs namenode -format

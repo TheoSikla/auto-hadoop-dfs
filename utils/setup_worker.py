@@ -132,6 +132,8 @@ def worker_init(hostname, unpack=True):
                 rc.execute_command(f"mv -f {env.hadoop_user_home}/{env.environ.get('HADOOP_STABLE_VERSION_NAME', None)} "
                                    f"{env.hadoop_user_home}/hadoop")
             transfer_custom_hadoop_conf(rc, hostname)
+    else:
+        transfer_custom_hadoop_conf(rc, hostname)
 
     rc.execute_command(create_failsafe_dot_profile)
     rc.execute_command(export_path_with_new_binaries)

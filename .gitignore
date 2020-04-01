@@ -199,4 +199,6 @@ dmypy.json
 
 .idea
 logs
-jdk-8u231-linux-x64.tar.gz
+artifacts/*
+
+jre-8u241-linux-x64.tar.gz
