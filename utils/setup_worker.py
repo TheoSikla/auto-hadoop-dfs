@@ -1,6 +1,7 @@
 import env
 from utils.ssh_handler import RemoteClient
 from utils.checks import get_artifacts_full_path
+from utils.entities import get_master, get_workers
 
 java_tar_file_name = env.environ.get('JAVA_TAR_FILE_NAME', None)
 hadoop_tar_file_name = env.environ.get('HADOOP_STABLE_VERSION_NAME_TAR', None)
@@ -34,6 +35,39 @@ export_path_with_new_binaries = f'cat {env.hadoop_user_home}/.profile2 > {env.ha
                                 f'echo "PATH={env.hadoop_user_home}/java/bin:{env.hadoop_user_home}/hadoop/bin:{env.hadoop_user_home}/hadoop/sbin:\$PATH" >> ' \
                                 f'{env.hadoop_user_home}/.profile;'
 
+is_wsl = f'if grep -q Microsoft /proc/version; then ' \
+         f'echo "True"; else echo "False"; fi'
+
+create_failsafe_hosts_file = f'if [ ! -f {env.hadoop_user_home}/hosts ]; then ' \
+                             f'cp {env.environ.get("HOSTS_FILE", None)} "$HOME/hosts"; fi'
+
+
+def append_to_hosts_file(rc):
+    payload = get_workers()
+    payload.append(get_master())
+    hosts_file = env.environ.get('HOSTS_FILE', None)
+    rc.execute_command(f'if [ -f {env.hadoop_user_home}/hosts ]; then cat "$HOME/hosts" > {hosts_file}; fi')
+    for entry in list(reversed(payload)):
+        ip = entry['ip']
+        hostname = entry['hostname']
+        rc.execute_command(f'echo -e "{ip}\t{hostname}" >> {hosts_file}')
+
+    if translate_to_bool(rc.execute_command(is_wsl)):
+        retrieved_hostfile = rc.execute_command(f'cat {hosts_file}')
+        lines_to_write = []
+        for line in retrieved_hostfile.split('\n'):
+            flag = False
+            for item in line.split('\t'):
+                if 'DESKTOP' in item:
+                    flag = True
+            if flag:
+                items = line.split('\t')
+                line = f'{items[0]}\t{rc.host}\t'
+                line += '\t'.join([_ for _ in items[1:]])
+            lines_to_write.append(line)
+        lines_to_write = '\n'.join(lines_to_write)
+        rc.execute_command(f'echo -e "{lines_to_write}" > {hosts_file}')
+
 
 def translate_to_bool(string):
     string = string.strip()
@@ -58,9 +92,8 @@ def worker_init(hostname, unpack=True):
     print(f"[+] Connected to {hostname}.")
 
     # Check if java exists
-    if not translate_to_bool(rc.execute_command(check_java_dir_exists)) or \
-            translate_to_bool(rc.execute_command(check_java_dir_exists)):
-        if not translate_to_bool(rc.execute_command(check_java_dir_exists)):
+    if not translate_to_bool(rc.execute_command(check_java_dir_exists)):
+        if not translate_to_bool(rc.execute_command(check_java_tar_exists)):
             print("[+] Uploading java tar...")
             rc.upload(f"{get_artifacts_full_path()}/{java_tar_file_name}")
             print("[+] Upload completed successfully.")
@@ -79,9 +112,8 @@ def worker_init(hostname, unpack=True):
                                    f"{env.hadoop_user_home}/java")
 
     # Check if hadoop exists
-    if not translate_to_bool(rc.execute_command(check_hadoop_dir_exists)) or \
-            translate_to_bool(rc.execute_command(check_hadoop_dir_exists)):
-        if not translate_to_bool(rc.execute_command(check_hadoop_dir_exists)):
+    if not translate_to_bool(rc.execute_command(check_hadoop_dir_exists)):
+        if not translate_to_bool(rc.execute_command(check_hadoop_tar_exists)):
             print("[+] Uploading hadoop...")
             rc.upload(f"{get_artifacts_full_path()}/{hadoop_tar_file_name}")
             print("[+] Upload completed successfully.")
@@ -100,8 +132,16 @@ def worker_init(hostname, unpack=True):
                 rc.execute_command(f"mv -f {env.hadoop_user_home}/{env.environ.get('HADOOP_STABLE_VERSION_NAME', None)} "
                                    f"{env.hadoop_user_home}/hadoop")
             transfer_custom_hadoop_conf(rc, hostname)
+    else:
+        transfer_custom_hadoop_conf(rc, hostname)
 
     rc.execute_command(create_failsafe_dot_profile)
     rc.execute_command(export_path_with_new_binaries)
+
+    # Configure /etc/hosts file
+    rc.execute_command(create_failsafe_hosts_file)
+    append_to_hosts_file(rc)
+
+    print(f"[+] {hostname} setup was completed successfully!\n")
 
     rc.disconnect()

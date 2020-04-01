@@ -2,8 +2,8 @@ import env
 from os import path
 
 artifacts_dir_name = 'artifacts'
-hadoop_tar_name = 'hadoop-3.2.1.tar.gz'
-java = 'jdk-8u231-linux-x64.tar.gz'
+hadoop_tar_name = env.environ.get('HADOOP_STABLE_VERSION_NAME_TAR', None)
+java = env.environ.get('JAVA_TAR_FILE_NAME', None)
 
 
 def get_artifacts_local_path():

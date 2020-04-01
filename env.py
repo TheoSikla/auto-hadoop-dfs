@@ -1,6 +1,10 @@
 from os import environ
 from utils.entities import get_master
 
+environ["HOSTS_FILE"] = "/etc/hosts"
+environ["WORKER_IDENTIFIER"] = "worker"
+environ["MASTER_IDENTIFIER"] = "master"
+
 environ["HADOOP_USER_HOME"] = "/home/hadoop"
 hadoop_user_home = environ.get('HADOOP_USER_HOME', None)
 environ["HADOOP_HOME"] = "/home/hadoop/hadoop"
@@ -28,8 +32,9 @@ environ["HADOOP_FAILSAFE_CONF_DIR"] = "hadoop-default-conf"
 environ["HADOOP_CUSTOM_CONF_DIR"] = "hadoop-custom-conf"
 environ["HADOOP_CUSTOM_GENERATED_CONF_DIR"] = "hadoop-custom-generated-conf"
 
-environ["JAVA_DIR_NAME"] = "jdk1.8.0_231"
-environ["JAVA_TAR_FILE_NAME"] = "jdk-8u231-linux-x64.tar.gz"
+environ["JAVA_NUMERIC_UPDATE"] = java_num_update = "241"
+environ["JAVA_DIR_NAME"] = f"jre1.8.0_{java_num_update}"
+environ["JAVA_TAR_FILE_NAME"] = f"jre-8u{java_num_update}-linux-x64.tar.gz"
 environ["JAVA_HOME"] = f"{hadoop_user_home}/java"
 
 environ["WORKERS_USERNAME"] = "hadoop"
